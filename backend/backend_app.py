@@ -4,11 +4,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import Dict, Any
 from datetime import datetime
 from pathlib import Path
-import json
 import csv
 import io
 import logging
