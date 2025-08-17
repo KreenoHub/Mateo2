@@ -3,9 +3,11 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from pathlib import Path
 import json
 import csv
 import io
@@ -51,11 +53,6 @@ async def shutdown_event():
     """Cleanup on shutdown"""
     await db.close()
     logger.info("Database connection closed")
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "TableHub backend is running", "docs": "/docs"}
 
 # Health check endpoint
 @app.get("/healthz")
@@ -281,6 +278,10 @@ if settings.DEBUG:
         except Exception as e:
             logger.error(f"Reset failed: {e}")
             raise HTTPException(status_code=500, detail="Failed to reset database")
+
+# Serve frontend static files after all API routes
+frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
