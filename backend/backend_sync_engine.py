@@ -151,4 +151,4 @@ class SyncEngine:
 
     def _event_to_delta(self, event):
         # Dummy implementation
-        return
+        return None

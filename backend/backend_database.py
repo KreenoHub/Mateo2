@@ -32,7 +32,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS tables (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                data JSONB NOT NULL,
+                data JSON NOT NULL,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 version INTEGER DEFAULT 1
             )
