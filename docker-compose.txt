@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tablehub-api:latest
+    container_name: tablehub-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/tablehub.db
+      - CORS_ORIGINS=http://localhost,http://localhost:3000,http://localhost:8080
+      - DEBUG=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (served via nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: tablehub-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Optional: PostgreSQL for production
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: tablehub-db
+  #   environment:
+  #     - POSTGRES_USER=tablehub
+  #     - POSTGRES_PASSWORD=changeme
+  #     - POSTGRES_DB=tablehub
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+volumes:
+  # postgres_data:
+  #   driver: local
+  data:
+    driver: local

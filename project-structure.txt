@@ -1,0 +1,36 @@
+tablehub/
+├── frontend/
+│   ├── index.html
+│   ├── styles.css
+│   ├── app.js
+│   ├── manifest.webmanifest
+│   ├── sw.js
+│   ├── core/
+│   │   ├── state.js
+│   │   ├── schema.js
+│   │   ├── diff.js
+│   │   └── clock.js
+│   ├── data/
+│   │   ├── idb.js
+│   │   └── cache.js
+│   ├── sync/
+│   │   ├── queue.js
+│   │   ├── client.js
+│   │   └── reconcile.js
+│   ├── ui/
+│   │   ├── tables.js
+│   │   ├── toolbar.js
+│   │   └── status.js
+│   └── icons/
+│       ├── icon-192.png
+│       └── icon-512.png
+├── backend/
+│   ├── app.py
+│   ├── models.py
+│   ├── database.py
+│   ├── sync_engine.py
+│   ├── requirements.txt
+│   └── config.py
+├── docker-compose.yml
+├── Dockerfile
+└── README.md

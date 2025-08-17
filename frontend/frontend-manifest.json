@@ -1,0 +1,37 @@
+{
+  "name": "TableHub - Offline-First Table Editor",
+  "short_name": "TableHub",
+  "description": "Edit tables offline with automatic sync",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "360x640",
+      "type": "image/png"
+    },
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png"
+    }
+  ]
+}

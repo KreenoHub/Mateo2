@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <title>TableHub - Offline-First Table Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body>
+    <!-- Sync Status Banner -->
+    <div id="sync-status" class="sync-status">
+        <span class="status-indicator"></span>
+        <span class="status-text">Offline</span>
+    </div>
+
+    <!-- Main Header -->
+    <header class="app-header">
+        <h1>TableHub</h1>
+        <button id="settings-btn" class="icon-btn" aria-label="Settings">⚙️</button>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button id="add-table-btn" class="btn btn-primary">+ New Table</button>
+        <button id="import-btn" class="btn">Import</button>
+        <button id="export-btn" class="btn">Export</button>
+        <button id="sync-now-btn" class="btn">Sync Now</button>
+    </div>
+
+    <!-- Tables Container -->
+    <main id="tables-container" class="tables-container">
+        <!-- Tables will be dynamically rendered here -->
+    </main>
+
+    <!-- Settings Drawer -->
+    <div id="settings-drawer" class="drawer">
+        <div class="drawer-header">
+            <h2>Settings</h2>
+            <button id="close-settings" class="icon-btn">✕</button>
+        </div>
+        <div class="drawer-content">
+            <div class="setting-group">
+                <label for="server-url">Server URL:</label>
+                <input type="url" id="server-url" placeholder="https://api.example.com">
+            </div>
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="auto-sync" checked>
+                    Auto-sync when online
+                </label>
+            </div>
+            <div class="setting-group">
+                <button id="clear-local" class="btn btn-danger">Clear Local Data</button>
+            </div>
+            <div class="setting-group">
+                <p class="client-id">Client ID: <span id="client-id-display"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Editor Modal -->
+    <div id="table-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="text" id="table-name" class="table-name-input" placeholder="Table Name">
+                <button id="close-modal" class="icon-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-wrapper">
+                    <table id="edit-table" class="editable-table">
+                        <thead id="table-headers"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+                <div class="table-controls">
+                    <button id="add-row" class="btn btn-sm">+ Row</button>
+                    <button id="add-col" class="btn btn-sm">+ Column</button>
+                    <button id="delete-table" class="btn btn-sm btn-danger">Delete Table</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Import Data</h3>
+                <button id="close-import" class="icon-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-options">
+                    <label class="file-input-label">
+                        <input type="file" id="import-file" accept=".json,.csv">
+                        Choose File (JSON/CSV)
+                    </label>
+                    <button id="confirm-import" class="btn btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
