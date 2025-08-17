@@ -52,6 +52,11 @@ async def shutdown_event():
     await db.close()
     logger.info("Database connection closed")
 
+# Root endpoint
+@app.get("/")
+async def root():
+    return {"message": "TableHub backend is running", "docs": "/docs"}
+
 # Health check endpoint
 @app.get("/healthz")
 async def health_check():
