@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Editable Tables App (Backend)</title>
+<style>
+  :root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--text-dim:#9ca3af;--accent:#60a5fa;--radius:14px;}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  header{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);background:rgba(15,23,42,.7);border-bottom:1px solid #111827}
+  .wrap{max-width:1100px;margin:0 auto;padding:12px 16px;} h1{font-size:18px;margin:6px 0;letter-spacing:.3px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button,input[type="number"],input[type="text"]{background:var(--panel);color:var(--text);border:1px solid var(--muted);border-radius:10px;padding:8px 10px;font-size:14px}
+  button.primary{border-color:transparent;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
+  button.good{border-color:transparent;background:linear-gradient(180deg,#059669,#047857)}
+  button.warn{border-color:transparent;background:linear-gradient(180deg,#d97706,#b45309)}
+  button.danger{border-color:transparent;background:linear-gradient(180deg,#dc2626,#b91c1c)}
+  .grid{display:grid;gap:14px;padding:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .card{background:linear-gradient(180deg,#0b1225,#0b1020);border:1px solid #1f2937;border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+  .card-title{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .title-edit{background:transparent;border:none;color:var(--text);font-weight:600;font-size:15px;padding:2px 6px;border-radius:8px}
+  .title-edit:focus{outline:1px solid var(--accent)}
+  table{width:100%;border-collapse:collapse;overflow:auto;border-radius:10px}
+  th,td{border:1px solid #1f2937;padding:8px;min-width:80px;max-width:300px;overflow-wrap:anywhere}
+  th{background:#0b1730;font-weight:600} td[contenteditable="true"]{background:#0d1222} td:focus{outline:1px solid var(--accent)}
+  .table-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .status{color:var(--text-dim);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Editable Tables App (Backend)</h1>
+    <div class="toolbar">
+      <span>Backend URL:</span>
+      <input id="api" type="text" placeholder="http://localhost:8000" style="width:240px"/>
+      <button id="connect" class="primary">Connect</button>
+      <span class="status" id="status">Disconnected</span>
+    </div>
+    <div class="toolbar" style="margin-top:8px">
+      <span>New table:</span>
+      <input id="rows" type="number" min="1" value="3" title="Rows"/>
+      <input id="cols" type="number" min="1" value="3" title="Cols"/>
+      <input id="tname" type="text" placeholder="Table title (optional)"/>
+      <button class="primary" id="addTableBtn">Add Table</button>
+      <button class="good" id="saveAll">Save All</button>
+      <button id="loadAll">Load All</button>
+      <a id="dlJson" class="status" href="#" target="_blank">Export JSON</a>
+      <a id="dlCsv" class="status" href="#" target="_blank" style="margin-left:8px">Export CSV</a>
+    </div>
+  </div>
+</header>
+<main class="wrap"><div id="grid" class="grid"></div></main>
+
+<script>
+(function(){
+  const grid = document.getElementById('grid');
+  const apiI = document.getElementById('api');
+  const connectBtn = document.getElementById('connect');
+  const status = document.getElementById('status');
+  const addBtn = document.getElementById('addTableBtn');
+  const rowsI = document.getElementById('rows');
+  const colsI = document.getElementById('cols');
+  const nameI = document.getElementById('tname');
+  const saveAllBtn = document.getElementById('saveAll');
+  const loadAllBtn = document.getElementById('loadAll');
+  const dlJson = document.getElementById('dlJson');
+  const dlCsv = document.getElementById('dlCsv');
+
+  let API = "";
+  let tables = []; // in-memory editing before save
+
+  function setStatus(msg){ status.textContent = msg; }
+
+  function uid(){ return 't'+Math.random().toString(36).slice(2,9); }
+
+  function buildTableData(r, c){
+    const headers = Array.from({length:c}, (_,j)=>`Col ${j+1}`);
+    const rows = Array.from({length:r}, () => Array.from({length:c}, ()=>''));
+    return {headers, rows};
+  }
+
+  function cellEditor(td, t, i, j){
+    td.contentEditable = 'true';
+    td.oninput = ()=>{ t.rows[i][j] = td.textContent; };
+  }
+
+  function headerEditor(th, t, j){
+    th.contentEditable = 'true';
+    th.oninput = ()=>{ t.headers[j] = th.textContent; };
+  }
+
+  function render(){
+    grid.innerHTML='';
+    tables.forEach(t=> grid.appendChild(makeTableCard(t)));
+  }
+
+  function makeTableCard(t){
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const top = document.createElement('div');
+    top.className = 'card-title';
+
+    const title = document.createElement('input');
+    title.value = t.name || 'Untitled Table';
+    title.className = 'title-edit';
+    title.oninput = () => { t.name = title.value; };
+
+    const actions = document.createElement('div');
+    actions.className = 'table-actions';
+    actions.innerHTML = `
+      <button data-act="add-row">+ Row</button>
+      <button data-act="add-col">+ Col</button>
+      <button data-act="del-row" class="warn">- Row</button>
+      <button data-act="del-col" class="warn">- Col</button>
+      <button data-act="save" class="good">Save</button>
+      <button data-act="delete" class="danger">Delete</button>
+    `;
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    t.headers.forEach((h, j)=>{
+      const th = document.createElement('th');
+      th.textContent = h;
+      headerEditor(th, t, j);
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    t.rows.forEach((row, i)=>{
+      const tr = document.createElement('tr');
+      row.forEach((cell, j)=>{
+        const td = document.createElement('td');
+        td.textContent = cell;
+        cellEditor(td, t, i, j);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    actions.addEventListener('click', async (e)=>{
+      const act = e.target?.dataset?.act;
+      if(!act) return;
+      if(act === 'add-row'){
+        const cols = t.headers.length;
+        const newRow = Array.from({length:cols}, ()=>'');
+        t.rows.push(newRow);
+        render();
+      }
+      if(act === 'add-col'){
+        t.headers.push(`Col ${t.headers.length+1}`);
+        t.rows.forEach(r=>r.push(''));
+        render();
+      }
+      if(act === 'del-row'){
+        t.rows.pop(); render();
+      }
+      if(act === 'del-col'){
+        t.headers.pop(); t.rows.forEach(r=>r.pop()); render();
+      }
+      if(act === 'save'){
+        await saveOne(t);
+      }
+      if(act === 'delete'){
+        await deleteOne(t);
+      }
+    });
+
+    top.appendChild(title);
+    top.appendChild(actions);
+    card.appendChild(top);
+    card.appendChild(table);
+    return card;
+  }
+
+  async function saveOne(t){
+    if(!API){ alert('Connect to backend first'); return; }
+    const payload = { name: t.name, headers: t.headers, rows: t.rows };
+    if(t.id && t.persisted){
+      // PUT
+      const r = await fetch(`${API}/api/tables/${t.id}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!r.ok) return alert('Save failed');
+      setStatus('Saved');
+    }else if(t.id){
+      // Check if exists then PUT else POST new with same id isn't supported -> just POST
+      const r = await fetch(`${API}/api/tables`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!r.ok) return alert('Create failed');
+      const created = await r.json();
+      t.id = created.id; t.persisted = true;
+      setStatus('Created');
+      render();
+    }else{
+      const r = await fetch(`${API}/api/tables`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!r.ok) return alert('Create failed');
+      const created = await r.json();
+      t.id = created.id; t.persisted = true;
+      setStatus('Created');
+      render();
+    }
+  }
+
+  async function deleteOne(t){
+    if(!API || !t.id){ alert('Not saved'); return; }
+    const r = await fetch(`${API}/api/tables/${t.id}`, { method:'DELETE' });
+    if(!r.ok) return alert('Delete failed');
+    tables = tables.filter(x=>x !== t);
+    render();
+  }
+
+  addBtn.addEventListener('click', ()=>{
+    const r = Math.max(1, parseInt(rowsI.value||'3',10));
+    const c = Math.max(1, parseInt(colsI.value||'3',10));
+    const t = { id: null, name: nameI.value.trim() || 'Untitled Table', ...buildTableData(r,c), persisted:false };
+    tables.push(t);
+    nameI.value='';
+    render();
+  });
+
+  connectBtn.addEventListener('click', async ()=>{
+    API = apiI.value.trim().replace(/\/+$/,'') || '';
+    if(!API){ setStatus('No URL'); return; }
+    try{
+      const r = await fetch(`${API}/healthz`);
+      if(!r.ok) throw new Error('Health check failed');
+      setStatus('Connected');
+      dlJson.href = `${API}/api/export.json`; dlCsv.href = `${API}/api/export.csv`;
+    }catch(err){
+      setStatus('Failed to connect');
+    }
+  });
+
+  loadAllBtn.addEventListener('click', async ()=>{
+    if(!API){ alert('Connect to backend first'); return; }
+    const r = await fetch(`${API}/api/tables`);
+    if(!r.ok) return alert('Load failed');
+    const arr = await r.json();
+    tables = arr.map(t=>({ id: t.id, name: t.name, headers: t.headers, rows: t.rows.map(r=>r.cells), persisted:true }));
+    render();
+  });
+
+  // initial render
+  render();
+})();
+</script>
+</body>
+</html>
