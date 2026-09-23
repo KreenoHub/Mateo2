@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+
+# gitsync: local env, notebook cache and nested repos
+.venv/
+.ipynb_checkpoints/
+/Mateo/
+/Mateo2/

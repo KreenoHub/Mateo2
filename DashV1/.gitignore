@@ -1,0 +1,21 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+.env
+.venv/
+env/
+venv/
+# VS Code
+.vscode/*.log
+# OS
+.DS_Store
+Thumbs.db
+# Exports
+*.csv
+*.json
+# Uvicorn reload cache
+.pytest_cache/
